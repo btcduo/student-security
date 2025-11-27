@@ -1,0 +1,4 @@
+The MultiSig enforces that *per-request confirmations* reach the configured threshold before execution rather than allowing the instance to *relay* transactions at *a low confirmation count*.
+The system assumes that owners can arbitrarily override the threshold without validating *that it stays within a safe boundary*.
+The architecture relies on governance state being modified only via explicit onlySelf entry points, thereby ensuring that owners *stick* to proposal-based functions.
+It mitigates privilege escalation risks by enforcing the threshold value *is at least* two and below the current owner count, in a way that ensures the governance instance never *deadlocks*.
