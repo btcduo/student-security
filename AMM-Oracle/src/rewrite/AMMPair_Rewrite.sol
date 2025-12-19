@@ -13,6 +13,7 @@ contract AMMPair_Rewrite {
     error Repeated_Token_Address();
     error Reserved_Token_OutOfBounds();
     error Insufficient_Reserved_Token();
+    error Locked();
     error Zero_Addr();
     error Zero_Liquidity();
     error Insufficient_Liquidity();
@@ -27,6 +28,8 @@ contract AMMPair_Rewrite {
 
     IERC20 public immutable token0;
     IERC20 public immutable token1;
+
+    uint8 private _unlocked = 1;
 
     uint112 public reserve0;
     uint112 public reserve1;
@@ -59,6 +62,15 @@ contract AMMPair_Rewrite {
         }
         token0 = IERC20(_token0);
         token1 = IERC20(_token1);
+    }
+
+    modifier lock() {
+        if(_unlocked != 1) {
+            revert Locked();
+        }
+        _unlocked = 0;
+        _;
+        _unlocked = 1;
     }
 
     function getReserves() public view returns(uint256 _reserve0, uint256 _reserve1) {
@@ -139,7 +151,7 @@ contract AMMPair_Rewrite {
         uint256 token0Desired,
         uint256 token1Desired,
         address to
-    ) external returns(uint256 liquidity) {
+    ) external lock returns(uint256 liquidity) {
         if(token0Desired == 0 || token1Desired == 0) {
             revert Zero_Amount();
         }
@@ -179,7 +191,7 @@ contract AMMPair_Rewrite {
     function removeLiquidity(
         uint256 liquidity,
         address to
-    ) external {
+    ) external lock {
         if(liquidity == 0) {
             revert Zero_Liquidity();
         }
@@ -219,7 +231,7 @@ contract AMMPair_Rewrite {
         uint256 amountIn,
         uint256 minAmountOut,
         address to
-    ) external returns(uint256 amountOut) {
+    ) external lock returns(uint256 amountOut) {
         if(tokenIn != address(token0) && tokenIn != address(token1)) {
             revert Invalid_Token_Address();
         }
